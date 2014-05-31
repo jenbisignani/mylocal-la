@@ -49,24 +49,6 @@ function geocodeAddress(address){
   json_response = $.getJSON(url, parse_geocode_response);
 }
 
-function lastElement(array){
-  len = array.length
-    if(len > 0){
-      return array[len - 1];
-    }
-    else{
-      return null;
-    }
-}
-
-function initialize() {
-  node2 = new Node("I am node 2", [], "choice", "2")
-    link = new Link(node2, "click here! I am a button to node 2")
-    node3 = new Node("I am node 3", [link], "choice", "3")
-    link3 = new Link(node3, "click here! I am a button to node 3")
-    entry_point = new Node("Choose Employer", [link, link3])
-}
-
 function submitAddress(){
   var inputAddr = $( "input" ).val();
   geocodeAddress(inputAddr)
