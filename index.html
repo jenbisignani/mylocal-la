@@ -1,0 +1,105 @@
+<!DOCTYPE html "-//W3C//DTD XHTML 1.0 Strict//EN" 
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <script src="jquery-1.11.1.js" type="text/javascript"></script>
+    <script type="text/javascript">
+
+
+
+      var state = {}
+      state["address"] = null;
+      state["latitude"] = null;
+      state["longitude"] = null;
+
+
+
+
+      function createSmallButton(display_text){
+        this.text = display_text;
+        this.fullHTML = "<div>"+text+"/<div>";
+        $("#small_buttons").append(this.fullHTML);
+      }
+
+function createDisplayWindow(display_html){
+  this.html = display_html;
+  $("#large_buttons").append(this.html);
+}
+
+function parse_geocode_response(response){
+  //console.log("in callback");
+  //console.log(response);
+  console.log(json_response);
+  formatted_address = response["locations"][0]["name"];
+  latitude = response["locations"][0]["extent"]["xmin"];
+  longitude = response["locations"][0]["extent"]["ymin"];
+  //console.log(formatted_address);
+  $( "input:text" ).val(formatted_address);
+  state["address"] = formatted_address;
+  state["latitude"] = latitude;
+  state["longitude"] = longitude;
+}
+
+function geocodeAddress(address){
+  address_string = address.replace(/ /g, "+");
+  //console.log(address_string);
+  url="http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/find?text="+address_string+"&f=pjson";
+  //console.log(url);
+  json_response = $.getJSON(url, parse_geocode_response);
+}
+
+function lastElement(array){
+  len = array.length
+    if(len > 0){
+      return array[len - 1];
+    }
+    else{
+      return null;
+    }
+}
+
+function initialize() {
+  node2 = new Node("I am node 2", [], "choice", "2")
+    link = new Link(node2, "click here! I am a button to node 2")
+    node3 = new Node("I am node 3", [link], "choice", "3")
+    link3 = new Link(node3, "click here! I am a button to node 3")
+    entry_point = new Node("Choose Employer", [link, link3])
+}
+
+function submitAddress(){
+  var inputAddr = $( "input" ).val();
+  geocodeAddress(inputAddr)
+    // Code should go here to initialize a variable that geocodes the address
+}
+
+
+</script>
+  </head>
+  <body>
+    <div id ="Welcome" style="width: 500px;">hi! Welcome to MyLocal.LA!</div>
+    <div id = "address bar">
+      <div id="container">
+        <h1>Enter Your Location</h1>
+        <form>
+          <p>
+          <label for="Address">Address</label>
+          <input type="text" name="Address" id="address" style="width:400px" />
+          </p>
+          <p>
+          <input type="button" name="submit" value="Submit" id="submitbutton" onClick="submitAddress();"/>
+          </p>
+        </form>
+      </div>
+    </div>
+
+    <div id="small_buttons">
+      small buttons go here
+
+    </div>
+
+    <div id="detail">
+      detail goes here
+    </div>
+  </body>
+</html>
