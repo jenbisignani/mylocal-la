@@ -16,15 +16,18 @@
 
 
 
-      function createSmallButton(display_text){
-        this.text = display_text;
-        this.fullHTML = "<div>"+text+"/<div>";
-        $("#small_buttons").append(this.fullHTML);
-      }
+function createSmallButton(display_text, output_html){
+  fullHTML = "<div style=&quot;border:2px solid;&quot;>"+display_text+"</div>";
+    button = $('<button/>',
+      {
+        text: display_text,
+        click: function () {createDisplayWindow(output_html)}
+    });
+  $("#small_buttons").append(button);
+}
 
 function createDisplayWindow(display_html){
-  this.html = display_html;
-  $("#large_buttons").append(this.html);
+  $("#detail").html(display_html);
 }
 
 function parse_geocode_response(response){
@@ -32,13 +35,14 @@ function parse_geocode_response(response){
   //console.log(response);
   console.log(json_response);
   formatted_address = response["locations"][0]["name"];
-  latitude = response["locations"][0]["extent"]["xmin"];
-  longitude = response["locations"][0]["extent"]["ymin"];
+  longitude = response["locations"][0]["extent"]["xmin"];
+  latitude = response["locations"][0]["extent"]["ymin"];
   //console.log(formatted_address);
   $( "input:text" ).val(formatted_address);
   state["address"] = formatted_address;
   state["latitude"] = latitude;
   state["longitude"] = longitude;
+  callAllAPIs();
 }
 
 function geocodeAddress(address){
@@ -51,8 +55,36 @@ function geocodeAddress(address){
 
 function submitAddress(){
   var inputAddr = $( "input" ).val();
+  cleanup_site()
   geocodeAddress(inputAddr)
-    // Code should go here to initialize a variable that geocodes the address
+}
+
+// takes in the description text for the small button, a function that calls out to the API and returns
+// html for the display div
+function apiCallout(description_text, callout_function){
+  this.description_text = description_text;
+  this.callout_function = callout_function;
+};
+
+apiCallout.prototype.callAPI = function () {
+  console.log("calling the API");
+  createSmallButton(this.description_text, this.callout_function());
+};
+
+//Example usage for the function above
+longCallout = new apiCallout("See the longitude!", function(){return("<div>"+state["longitude"]+"</div>")});
+latCallout = new apiCallout("See the latitude!", function(){return("<div>"+state["latitude"]+"</div>")});
+
+
+// These are all the API callouts we have defined. They will all run.
+all_api_callouts = [longCallout, latCallout]
+
+function callAllAPIs(){
+  $.each(all_api_callouts, function(i, x){x.callAPI()})
+}
+
+function cleanup_site(){
+  $("#small_buttons").empty()
 }
 
 
@@ -76,12 +108,10 @@ function submitAddress(){
     </div>
 
     <div id="small_buttons">
-      small buttons go here
-
     </div>
 
-    <div id="detail">
-      detail goes here
+    <div id="detail", style="border:2px solid;">
+      Put in your address and hit the submit button!
     </div>
   </body>
 </html>
