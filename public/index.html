@@ -199,6 +199,59 @@
 
           }
 
+          function googleCivicData(){
+            $.ajax({
+              contentType:"application/json", dataType:"json",
+              url: "https://www.googleapis.com/civicinfo/v1/voterinfo/4026/lookup?key=AIzaSyDo5kaDolCv2-7-hYqAlntunKvF33Wgzvo",
+              type:'POST', data:"{ 'address': '"+state["address"]+"'}",
+              success: printGoogleData
+            });
+          }
+
+          function format_election(json){
+            
+            function link(text, url){
+              if(url != undefined){
+                return("<a href='"+ url +"', target='_blank'>" + text +"</a>")
+              } else {return(text)}}
+
+            if (json["office"] != undefined){
+
+            html = (json["level"].toUpperCase() + " " + json["office"])
+            can_string = ""
+            $.each(json["candidates"], function(i, can){can_string = can_string + "<br />" + link(can["name"], can["candidateUrl"]) + " (" + can["party"] + ")"})
+            html = "<p>" + html + can_string + "</p>"
+            return(html)
+            }
+
+            if(json["referendumTitle"] != undefined){
+              html = link(json["referendumTitle"], json["referendumUrl"]) + ":" + json["referendumSubtitle"]
+              return(html)
+            }
+            return("")
+          }
+
+          function format_polling_station(json){
+            console.log("pollingJSON")
+              console.log(json)
+              console.log(json["address"]["line1"])
+              html = json["address"]["locationName"] + ", " + json["address"]["line1"] + " " + json["address"]["city"] + ", " + json["pollingHours"]
+              html = "<br/>"+ html
+              return(html)
+          }
+
+          function printGoogleData(data){
+            elections_html = "<p>These are all the candidates running in the June 3, 2014 Statewide Election.</p>"
+
+            polling_stations_html = "Polling location information:"
+            $.each(data["pollingLocations"], function(idx, x){polling_stations_html = polling_stations_html + format_polling_station(x)})
+            elections_html = elections_html + "<p>" + polling_stations_html + "</p>"
+              
+              $.each(data["contests"], function(idx, x){elections_html = elections_html + format_election(x);console.log(x["candidates"])})
+              var myData = data
+              createSmallButton("June 3 Election Information", elections_html)
+              console.log(data)
+          }
 
           //function nbhdExpend(nbhd_name) {
   
@@ -330,8 +383,9 @@
           getGasPowerCallout = new apiCallout(printGasPowerSpending)
           nbhdExpendCallout = new apiCallout(nbhdExpend)
           policeStationCallout = new apiCallout(policeStationInfo)
+          googleCivicCallout = new apiCallout(googleCivicData)
           // These are all the API callouts we have defined. They will all run.
-          all_api_callouts = [longCallout, get311Callout, pollingStationsCallout, getGasPowerCallout, nbhdExpendCallout, neighborhoodCouncilCallout, policeStationCallout]
+          all_api_callouts = [get311Callout, pollingStationsCallout, getGasPowerCallout, nbhdExpendCallout, googleCivicCallout]
 
           function callAllAPIs(){
             $.each(all_api_callouts, function(i, x){x.callAPI()})
