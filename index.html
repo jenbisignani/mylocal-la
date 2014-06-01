@@ -273,9 +273,9 @@
           neighborhoodCouncilCallout = new apiCallout(getNeighborhoodCouncilInfo)
           getGasPowerCallout = new apiCallout(printGasPowerSpending)
           nbhdExpendCallout = new apiCallout(nbhdExpend)
-
           // These are all the API callouts we have defined. They will all run.
           all_api_callouts = [longCallout, get311Callout, pollingStationsCallout, getGasPowerCallout, nbhdExpendCallout, neighborhoodCouncilCallout]
+
           function callAllAPIs(){
             $.each(all_api_callouts, function(i, x){x.callAPI()})
           }
