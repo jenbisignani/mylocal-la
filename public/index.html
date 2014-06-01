@@ -21,8 +21,10 @@
         "esri/tasks/query", "esri/tasks/QueryTask", "esri/geometry/Geometry", 
         "esri/geometry/Point", "esri/geometry/Circle", "esri/SpatialReference",  
         "esri/dijit/analysis/FindNearest", "esri/layers/FeatureLayer", "esri/graphic", 
-        "esri/tasks/FeatureSet", "esri/map", "dojo/dom", "dojo/on", "dojo/domReady!"
-      ], function (Query, QueryTask, Geometry, Point, Circle, SpatialReference, FindNearest, FeatureLayer, Graphic, FeatureSet, Map, dom, on) {
+        "esri/tasks/FeatureSet", "esri/map", "esri/symbols/SimpleMarkerSymbol",
+        "esri/Color", "esri/symbols/SimpleLineSymbol",
+        "dojo/dom", "dojo/on", "dojo/domReady!"
+      ], function (Query, QueryTask, Geometry, Point, Circle, SpatialReference, FindNearest, FeatureLayer, Graphic, FeatureSet, Map, SimpleMarkerSymbol, Color, SimpleLineSymbol, dom, on) {
 
 
           var state = {}
@@ -36,8 +38,8 @@
             map = new Map("map", {
               center: [state["longitude"], state["latitude"]],
               zoom: 15,
-              basemap: "streets",
               isPan: "false",
+              basemap: "streets",
               isScrollWheelZoom: false,
               isRubberBandZoom: false,
               isZoomSlider: false
@@ -48,6 +50,13 @@
               map.disableDoubleClickZoom();
               map.hidePanArrows();
               map.hideZoomSlider();
+
+            var sms = new SimpleMarkerSymbol().setStyle(
+                SimpleMarkerSymbol.STYLE_DIAMOND).setColor(
+                new Color([255,0,0,0.5]));
+            var pt = new Point(state["longitude"], state["latitude"]);
+            var graphic = new Graphic(pt, sms);
+            map.graphics.add(graphic);              
             });
           }
 
