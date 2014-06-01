@@ -4,6 +4,7 @@
   <head>
     <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
     <link rel="StyleSheet" href="sinorcaish-screen.css" type="text/css" media="screen" />
+    <link rel="stylesheet" href="http://js.arcgis.com/3.9/js/dojo/dijit/themes/tundra/tundra.css">
 
     <link href="nv.d3.css" rel="stylesheet">
 
@@ -17,8 +18,10 @@
     <script type="text/javascript">
       require([
         "esri/tasks/query", "esri/tasks/QueryTask", "esri/geometry/Geometry", 
-        "esri/geometry/Point", "esri/geometry/Circle", "esri/SpatialReference",  "dojo/dom", "dojo/on", "dojo/domReady!"
-      ], function (Query, QueryTask, Geometry, Point, Circle, SpatialReference, dom, on) {
+        "esri/geometry/Point", "esri/geometry/Circle", "esri/SpatialReference",  
+        "esri/dijit/analysis/FindNearest", "esri/layers/FeatureLayer", "esri/graphic", 
+        "esri/tasks/FeatureSet", "dojo/dom", "dojo/on", "dojo/domReady!"
+      ], function (Query, QueryTask, Geometry, Point, Circle, SpatialReference, FindNearest, FeatureLayer, Graphic, FeatureSet, dom, on) {
 
 
           var state = {}
@@ -26,6 +29,59 @@
           state["latitude"] = null;
           state["longitude"] = null;
           state["zip"] = null;
+
+          function policeStationInfo() {
+            //First build the featurelayer to for the analysis layer
+            /*
+            var layerDefinition = {
+              "geometryType" : "esriGeometryPoint",
+              "fields" : [{
+                "name" : "DATETIME",
+                "type" : "esriFieldTypeDate",
+                "alias" : "DATETIME"
+              }]
+            };
+*/
+ 
+
+            var graphic = new Graphic(new Point(state["longitude"], state["latitude"]));
+            graphic.setAttributes({"ObjectID":1});              
+            var features = [graphic];
+            var featureSet = new FeatureSet();
+            featureSet.features = features; 
+
+           var featureCollection = {
+              layerDefinition: {
+                  "geometryType": "esriGeometryPoint",
+                  "objectIdField": "ObjectID",
+                  "fields": [{
+                    "name":"ObjectID",
+                    "alias":"ObjectID",
+                    "type":"esriFieldTypeOID"
+                  }]
+              },
+              featureSet: featureSet
+            };            
+            //Build the parameters for the closest facilities search
+            var findNearest = new FindNearest({
+              analysisLayer: new FeatureLayer(featureCollection), // Where am I now?
+              nearLayer: new FeatureLayer("http://services3.arcgis.com/Oj4UNowFiRiZHKg1/arcgis/rest/services/police_stations/FeatureServer/0"), //what's close?
+              maxCount: 1,
+            });
+
+            //build the parameters for our query
+            var params = {
+              itemParams: {
+                description: "Item Descripotion",
+                snippet: "Snippet",
+
+              }
+            }
+
+            //Now we run our query
+            findNearest.execute(params);
+
+          }
 
           function getNeighborhoodCouncilInfo() {
             var queryTask = new QueryTask("http://services3.arcgis.com/Oj4UNowFiRiZHKg1/arcgis/rest/services/Neighborhood_Council_Maps/FeatureServer/0");
@@ -273,8 +329,9 @@
           neighborhoodCouncilCallout = new apiCallout(getNeighborhoodCouncilInfo)
           getGasPowerCallout = new apiCallout(printGasPowerSpending)
           nbhdExpendCallout = new apiCallout(nbhdExpend)
+          policeStationCallout = new apiCallout(policeStationInfo)
           // These are all the API callouts we have defined. They will all run.
-          all_api_callouts = [longCallout, get311Callout, pollingStationsCallout, getGasPowerCallout, nbhdExpendCallout, neighborhoodCouncilCallout]
+          all_api_callouts = [longCallout, get311Callout, pollingStationsCallout, getGasPowerCallout, nbhdExpendCallout, neighborhoodCouncilCallout, policeStationCallout]
 
           function callAllAPIs(){
             $.each(all_api_callouts, function(i, x){x.callAPI()})
@@ -290,7 +347,7 @@
 
 </script>
   </head>
-  <body>
+  <body class="tundra">
     <h1>Welcome to MyLocal.LA!</h1>
     <div id = "address bar">
       <div id="container">
