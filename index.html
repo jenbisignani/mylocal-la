@@ -12,6 +12,8 @@
       state["address"] = null;
       state["latitude"] = null;
       state["longitude"] = null;
+      state["zip"] = null;
+
 
 
 
@@ -58,6 +60,8 @@ function parse_geocode_response(response){
   state["address"] = formatted_address;
   state["latitude"] = latitude;
   state["longitude"] = longitude;
+  addr = state["address"].split(', ')
+  state["zip"] = addr [addr.length-1]
   callAllAPIs();
 }
 
