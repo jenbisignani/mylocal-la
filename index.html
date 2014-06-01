@@ -12,6 +12,7 @@
 
     <script src="jquery-1.11.1.js" type="text/javascript"></script>
     <script src="http://js.arcgis.com/3.9/"></script>
+    <script src="census.js"></script>
     <script type="text/javascript">
       require([
         "esri/tasks/query", "esri/tasks/QueryTask", "esri/geometry/Geometry", 
@@ -25,6 +26,7 @@
           state["longitude"] = null;
           state["zip"] = null;
 
+          
 
           function getPollingStationInfo() {
             var queryTask = new QueryTask("http://services3.arcgis.com/Oj4UNowFiRiZHKg1/arcgis/rest/services/polling_places/FeatureServer/0");
@@ -219,7 +221,7 @@
 </script>
   </head>
   <body>
-    <h1>hi! Welcome to MyLocal.LA!</h1>
+    <h1>Welcome to MyLocal.LA!</h1>
     <div id = "address bar">
       <div id="container">
         <h3>Enter Your Location</h3>
