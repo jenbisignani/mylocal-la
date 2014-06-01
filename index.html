@@ -80,13 +80,19 @@
             }
             newdata.sort(function(a,b) { return b.service_count - a.service_count } )
 
-            outputHTML = "<div>"
+            values = []
+            outputHTML = "<div>Top 311 calls in your zip code:<br>"
             for (var i = 0; i < Math.min(25,newdata.length); i++) {
               outputHTML += newdata[i]['service_count'] + ' calls about ' + newdata[i]['service_name'] + '<br>'
+              values.push({ 'label' : newdata[i]['service_name'] , 'value' : newdata[i]['service_count'] })
             }
             outputHTML += "</div>"
 
-            createSmallButton("Top 311 calls in your zipcode since 2011", outputHTML)
+
+            newjson = [ { 'values' : values } ]
+
+
+            createSmallButton("Top 311 calls", outputHTML)
           }
 
 
@@ -97,16 +103,16 @@
               thisData = []
               //var allData = []
 
-              total = 0
+              var total = 0
 
               for (var i = 0; i < data.length; i++) {
                 if ( (data[i]['neighborhood_council'].trim() == nbhd_name.trim()) && (data[i].hasOwnProperty('task')) && (data[i].hasOwnProperty('spending_category')) ) {
                   newobj = { 'label' : (data[i]['spending_category'] + ': ' + data[i]['task']) , 'value' : data[i]['sum_expenditure'] }
                   thisData.push(newobj)
-                  total += data[i]['sum_expenditure']
+                  console.log(total)
+                  total = +total + +data[i]['sum_expenditure']
 
                 }
-                // just this neighborhood
 
               }
 
@@ -118,7 +124,12 @@
               $("#small_buttons").append(button);
 
               function createDisplayWindow2() {
-                $("#detail").html('Pie chart of your neighborhood council expenditures:<br> <div id="chart"><svg></svg></div>');
+                thisHTML = 'Your neighborhood:' + nbhd_name + "<br>";
+                thisHTML += 'Pie chart of your neighborhood council expenditures:<br> <div id="chart"><svg></svg></div>';
+                thisHTML += 'Total spending of your neighborhood council = $' + total + "<br>";
+                thisHTML += 'This data provided by <a href="http://data.lacity.org">data.lacity.org</a>';
+
+                $("#detail").html(thisHTML);
 
                 nv.addGraph(function() {
                   var chart = nv.models.pieChart()
@@ -132,12 +143,10 @@
                   return chart;
                 });
               }
-
             }
 
             var url = "http://controllerdata.lacity.org/resource/f2ec-m4t9.json?$select=neighborhood_council,spending_category,task,sum(expenditure)&$group=neighborhood_council,spending_category,task"
             $.getJSON(url, parseExpendRender)
-
           }
 
 
@@ -253,7 +262,6 @@
       <p>
       Put in your address and hit the submit button!
       </p>
-
     </div>
     </div>
 
