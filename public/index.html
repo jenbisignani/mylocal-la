@@ -31,7 +31,17 @@
           state["zip"] = null;
           state["neighborhood_name"] = null;
 
-
+          function makeMap()  {
+            map = new Map("map", {
+              center: [state["longitude"], state["latitude"]],
+              zoom: 15,
+              basemap: "streets",
+              isPan: false,
+              isScrollWheelZoom: false,
+              isRubberBandZoom: false,
+              isZoomSlider: false
+            });
+          }
 
           function policeStationInfo() {
             //First build the featurelayer to for the analysis layer
@@ -423,11 +433,12 @@
           neighborhoodCouncilCallout = new apiCallout(getNeighborhoodCouncilInfo)
           getGasPowerCallout = new apiCallout(printGasPowerSpending)
           nbhdExpendCallout = new apiCallout(mainNbhdExpend)
-          policeStationCallout = new apiCallout(policeStationInfo)
           googleCivicCallout = new apiCallout(googleCivicData)
           geoWikiCallout = new apiCallout(geoWiki)
+          makeMapCallout = new apiCallout(makeMap);
+
           // These are all the API callouts we have defined. They will all run.
-          all_api_callouts = [get311Callout, pollingStationsCallout, getGasPowerCallout, nbhdExpendCallout, googleCivicCallout, geoWikiCallout]
+          all_api_callouts = [get311Callout, pollingStationsCallout, getGasPowerCallout, nbhdExpendCallout, googleCivicCallout, geoWikiCallout, makeMapCallout]
 
           function callAllAPIs(){
             $.each(all_api_callouts, function(i, x){x.callAPI()})
@@ -466,7 +477,7 @@
       </p>
     </div>
     </div>
-
+    <div id= "map"></div>
 
   </body>
 </html>
