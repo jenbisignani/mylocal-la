@@ -338,7 +338,17 @@
 
 
           function geoWiki() {
-            console.log(state)
+            url = "http://api.wikilocation.org/articles?lat=" + state["latitude"]
+            url += "&lng=" + state["longitude"]
+            url += "&radius=8046"
+            url += "&type=landmark"
+            url += "&limit=10"
+
+            function geoWikiRender(data) {
+              console.log(data)
+            }
+
+            $.getJSON(url,geoWikiRender)
           }
 
 
@@ -417,7 +427,7 @@
           googleCivicCallout = new apiCallout(googleCivicData)
           geoWikiCallout = new apiCallout(geoWiki)
           // These are all the API callouts we have defined. They will all run.
-          all_api_callouts = [get311Callout, pollingStationsCallout, getGasPowerCallout, nbhdExpendCallout, googleCivicCallout]
+          all_api_callouts = [get311Callout, pollingStationsCallout, getGasPowerCallout, nbhdExpendCallout, googleCivicCallout, geoWikiCallout]
 
           function callAllAPIs(){
             $.each(all_api_callouts, function(i, x){x.callAPI()})
