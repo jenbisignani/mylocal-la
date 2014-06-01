@@ -53,6 +53,7 @@ input {
   width: 900px;
   min-height: 200px;
   float:left;
+  margin-top:5px;
   /*font-weight: bolder;*/
 }
 
@@ -61,7 +62,8 @@ input {
    height:250px;
    border-color:black;
    float: left;
-   padding-left:20px;
+   padding-left:30px;
+   margin-top:5px;
 
 }
 
