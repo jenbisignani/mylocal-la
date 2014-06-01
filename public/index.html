@@ -5,6 +5,7 @@
     <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
     <link rel="StyleSheet" href="sinorcaish-screen.css" type="text/css" media="screen" />
     <link rel="stylesheet" href="http://js.arcgis.com/3.9/js/dojo/dijit/themes/tundra/tundra.css">
+    <link rel="stylesheet" href="http://js.arcgis.com/3.9/js/esri/css/esri.css">
 
     <link href="nv.d3.css" rel="stylesheet">
 
@@ -20,8 +21,8 @@
         "esri/tasks/query", "esri/tasks/QueryTask", "esri/geometry/Geometry", 
         "esri/geometry/Point", "esri/geometry/Circle", "esri/SpatialReference",  
         "esri/dijit/analysis/FindNearest", "esri/layers/FeatureLayer", "esri/graphic", 
-        "esri/tasks/FeatureSet", "dojo/dom", "dojo/on", "dojo/domReady!"
-      ], function (Query, QueryTask, Geometry, Point, Circle, SpatialReference, FindNearest, FeatureLayer, Graphic, FeatureSet, dom, on) {
+        "esri/tasks/FeatureSet", "esri/map", "dojo/dom", "dojo/on", "dojo/domReady!"
+      ], function (Query, QueryTask, Geometry, Point, Circle, SpatialReference, FindNearest, FeatureLayer, Graphic, FeatureSet, Map, dom, on) {
 
 
           var state = {}
@@ -31,7 +32,17 @@
           state["zip"] = null;
           state["neighborhood_name"] = null;
 
-
+          function makeMap()  {
+            map = new Map("map", {
+              center: [state["longitude"], state["latitude"]],
+              zoom: 15,
+              basemap: "streets",
+              isPan: false,
+              isScrollWheelZoom: false,
+              isRubberBandZoom: false,
+              isZoomSlider: false
+            });
+          }
 
           function policeStationInfo() {
             //First build the featurelayer to for the analysis layer
@@ -435,11 +446,12 @@
           neighborhoodCouncilCallout = new apiCallout(getNeighborhoodCouncilInfo)
           getGasPowerCallout = new apiCallout(printGasPowerSpending)
           nbhdExpendCallout = new apiCallout(mainNbhdExpend)
-          policeStationCallout = new apiCallout(policeStationInfo)
           googleCivicCallout = new apiCallout(googleCivicData)
           geoWikiCallout = new apiCallout(geoWiki)
+          makeMapCallout = new apiCallout(makeMap);
+
           // These are all the API callouts we have defined. They will all run.
-          all_api_callouts = [get311Callout, pollingStationsCallout, getGasPowerCallout, nbhdExpendCallout, googleCivicCallout, geoWikiCallout]
+          all_api_callouts = [get311Callout, pollingStationsCallout, getGasPowerCallout, nbhdExpendCallout, neighborhoodCouncilCallout, googleCivicCallout, geoWikiCallout, makeMapCallout]
 
           function callAllAPIs(){
             $.each(all_api_callouts, function(i, x){x.callAPI()})
@@ -478,7 +490,7 @@
       </p>
     </div>
     </div>
-
+    <div id= "map"></div>
 
   </body>
 </html>
