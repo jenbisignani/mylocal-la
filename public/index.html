@@ -172,12 +172,10 @@
           function printGasPowerSpending(){
             all_zips_url = "http://data.lacity.org/resource/c72k-f6bb.json?$select=zip_code,sum(water_use),sum(power_use)&$group=zip_code";
             totals_url = 
-            console.log("hereherehereh")
             gas_water_spending = $.getJSON(all_zips_url, parseGasPowerAndRender);
           }
 
           function parseGasPowerAndRender(data){
-            console.log("in callback")
             percapPower={}
             percapWater={}
             total_power=0
@@ -202,6 +200,55 @@
 
           }
 
+          function googleCivicData(){
+            $.ajax({
+              contentType:"application/json", dataType:"json",
+              url: "https://www.googleapis.com/civicinfo/v1/voterinfo/4026/lookup?key=AIzaSyDo5kaDolCv2-7-hYqAlntunKvF33Wgzvo",
+              type:'POST', data:"{ 'address': '"+state["address"]+"'}",
+              success: printGoogleData
+            });
+          }
+
+          function format_election(json){
+            
+            function link(text, url){
+              if(url != undefined){
+                return("<a href='"+ url +"', target='_blank'>" + text +"</a>")
+              } else {return(text)}}
+
+            if (json["office"] != undefined){
+
+            html = (json["level"].toUpperCase() + " " + json["office"])
+            can_string = ""
+            $.each(json["candidates"], function(i, can){can_string = can_string + "<br />" + link(can["name"], can["candidateUrl"]) + " (" + can["party"] + ")"})
+            html = "<p>" + html + can_string + "</p>"
+            return(html)
+            }
+
+            if(json["referendumTitle"] != undefined){
+              html = link(json["referendumTitle"], json["referendumUrl"]) + ":" + json["referendumSubtitle"]
+              return(html)
+            }
+            return("")
+          }
+
+          function format_polling_station(json){
+              html = json["address"]["locationName"] + ", " + json["address"]["line1"] + " " + json["address"]["city"] + ", " + json["pollingHours"]
+              html = "<br/>"+ html
+              return(html)
+          }
+
+          function printGoogleData(data){
+            elections_html = "<p>These are all the candidates running in the June 3, 2014 Statewide Election.</p>"
+
+            polling_stations_html = "Polling location information:"
+            $.each(data["pollingLocations"], function(idx, x){polling_stations_html = polling_stations_html + format_polling_station(x)})
+            elections_html = elections_html + "<p>" + polling_stations_html + "</p>"
+              
+              $.each(data["contests"], function(idx, x){elections_html = elections_html + format_election(x)})
+              var myData = data
+              createSmallButton("June 3 Election Information", elections_html)
+          }
 
           //function nbhdExpend(nbhd_name) {
   
@@ -250,7 +297,6 @@
                 if ( (data[i]['neighborhood_council'].trim().toLowerCase() == nbhd_name.trim().toLowerCase()) && (data[i].hasOwnProperty('task')) && (data[i].hasOwnProperty('spending_category')) ) {
                   newobj = { 'label' : (data[i]['spending_category'] + ': ' + data[i]['task']) , 'value' : data[i]['sum_expenditure'] }
                   thisData.push(newobj)
-                  //console.log(total)
                   total = +total + +data[i]['sum_expenditure']
 
                 }
@@ -302,7 +348,6 @@
           }
 
           function createDisplayWindow(display_html){
-            console.log(display_html);
             $("#detail").html(display_html);
           }
 
@@ -364,8 +409,9 @@
           getGasPowerCallout = new apiCallout(printGasPowerSpending)
           nbhdExpendCallout = new apiCallout(mainNbhdExpend)
           policeStationCallout = new apiCallout(policeStationInfo)
+          googleCivicCallout = new apiCallout(googleCivicData)
           // These are all the API callouts we have defined. They will all run.
-          all_api_callouts = [longCallout, get311Callout, pollingStationsCallout, getGasPowerCallout, nbhdExpendCallout, neighborhoodCouncilCallout, policeStationCallout]
+          all_api_callouts = [get311Callout, pollingStationsCallout, getGasPowerCallout, nbhdExpendCallout, googleCivicCallout]
 
           function callAllAPIs(){
             $.each(all_api_callouts, function(i, x){x.callAPI()})
