@@ -4,128 +4,134 @@
   <head>
     <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
     <script src="jquery-1.11.1.js" type="text/javascript"></script>
+    <script src="http://js.arcgis.com/3.9/"></script>    
     <script type="text/javascript">
+      require([
+        "esri/tasks/query", "esri/tasks/QueryTask", "esri/geometry/Geometry", 
+        "esri/geometry/Point", "esri/geometry/Circle", "esri/SpatialReference",  "dojo/dom", "dojo/on", "dojo/domReady!"
+      ], function (Query, QueryTask, Geometry, Point, Circle, SpatialReference, dom, on) {
+
+
+          var state = {}
+          state["address"] = null;
+          state["latitude"] = null;
+          state["longitude"] = null;
+          state["zip"] = null;
 
 
 
-      var state = {}
-      state["address"] = null;
-      state["latitude"] = null;
-      state["longitude"] = null;
-      state["zip"] = null;
+
+          function print311Info() {
+            //addr = state["address"].split(', ');
+            //zip = addr[addr.length-1];
+            var zip = state["zip"]
+            url = "http://data.lacity.org/resource/ukiu-8trj.json?$select=service_name,count(1) as service_count"
+            url += "&$group=service_name"
+            url += "&$where=zip_code=" + zip;
+            $.getJSON(url, parse_311_and_render )
+          }
+
+          function parse_311_and_render(data){
+            newdata = []
+            for (var i = 0; i < data.length; i++) {
+              if (data[i].hasOwnProperty("service_name")) {
+                newdata.push(data[i]);
+              }
+            }
+            newdata.sort(function(a,b) { return b.service_count - a.service_count } )
+
+            outputHTML = "<div>"
+            for (var i = 0; i < 20; i++) {
+              outputHTML += newdata[i]['service_count'] + ' calls about ' + newdata[i]['service_name'] + '<br>'
+            }
+            outputHTML += "</div>"
+
+            createSmallButton("Top 311 calls in your zipcode since 2011", outputHTML)
+          }
 
 
+          function createSmallButton(display_text, resp){
+            fullHTML = "<div style=&quot;border:2px solid;&quot;>"+display_text+"</div>";
+              button = $('<button/>',
+                {
+                  text: display_text,
+                  click: function () {createDisplayWindow(resp)}
+              });
+            $("#small_buttons").append(button);
+          }
 
+          function createDisplayWindow(display_html){
+            console.log(display_html);
+            $("#detail").html(display_html);
+          }
 
-function print311Info() {
-  //addr = state["address"].split(', ');
-  //zip = addr[addr.length-1];
-  var zip = state["zip"]
-  url = "http://data.lacity.org/resource/ukiu-8trj.json?$select=service_name,count(1) as service_count"
-  url += "&$group=service_name"
-  url += "&$where=zip_code=" + zip;
-  $.getJSON(url, parse_311_and_render )
-}
+          function parse_geocode_response(response){
+            //console.log("in callback");
+            //console.log(response);
+            console.log(json_response);
+            formatted_address = response["locations"][0]["name"];
+            longitude = response["locations"][0]["extent"]["xmin"];
+            latitude = response["locations"][0]["extent"]["ymin"];
+            //console.log(formatted_address);
+            $( "input:text" ).val(formatted_address);
+            state["address"] = formatted_address;
+            state["latitude"] = latitude;
+            state["longitude"] = longitude;
+            addr = state["address"].split(', ')
+            state["zip"] = addr [addr.length-1]
+            callAllAPIs();
+          }
 
-function parse_311_and_render(data){
-  newdata = []
-  for (var i = 0; i < data.length; i++) {
-    if (data[i].hasOwnProperty("service_name")) {
-      newdata.push(data[i]);
-    }
-  }
-  newdata.sort(function(a,b) { return b.service_count - a.service_count } )
+          function geocodeAddress(address){
+            address_string = address.replace(/ /g, "+");
+            //console.log(address_string);
+            url="http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/find?text="+address_string+"&f=pjson";
+            //console.log(url);
+            json_response = $.getJSON(url, parse_geocode_response);
+          }
 
-  outputHTML = "<div>"
-  for (var i = 0; i < 20; i++) {
-    outputHTML += newdata[i]['service_count'] + ' calls about ' + newdata[i]['service_name'] + '<br>'
-  }
-  outputHTML += "</div>"
+          function submitAddress(){
+            var inputAddr = $( "input" ).val();
+            cleanup_site()
+            geocodeAddress(inputAddr)
+          }
 
-  createSmallButton("Top 311 calls in your zipcode since 2011", outputHTML)
-}
+          // takes in the description text for the small button, a function that calls out to the API and returns
+          // html for the display div
+          function apiCallout(callout_function){
+            this.callout_function = callout_function;
+          };
 
+          apiCallout.prototype.callAPI = function () {
+            console.log("calling the API");
+            console.log(this.description_text)
+            console.log(this.callout_function)
+            this.callout_function()
+            //createSmallButton(this.description_text, this.callout_function());
+          };
 
-function createSmallButton(display_text, resp){
-  fullHTML = "<div style=&quot;border:2px solid;&quot;>"+display_text+"</div>";
-    button = $('<button/>',
-      {
-        text: display_text,
-        click: function () {createDisplayWindow(resp)}
-    });
-  $("#small_buttons").append(button);
-}
+          //Example usage for the function above
+          longCallout = new apiCallout(function(){createSmallButton("See the longitude", "<div>"+state["longitude"]+"</div>")});
+          //latCallout = new apiCallout(function(){return("<div>"+state["latitude"]+"</div>")});
+          //addrCallout = new apiCallout(function(){return("<div>"+state["address"]+"</div>")});
+          //zipcodeCallout = new apiCallout(function(){
+          //  addr = state["address"].split(', ')
+          //  return("<div>"+addr[addr.length-1]+"</div>")});
+          get311Callout = new apiCallout(print311Info)
 
-function createDisplayWindow(display_html){
-  console.log(display_html);
-  $("#detail").html(display_html);
-}
+          // These are all the API callouts we have defined. They will all run.
+          all_api_callouts = [longCallout, get311Callout]
 
-function parse_geocode_response(response){
-  //console.log("in callback");
-  //console.log(response);
-  console.log(json_response);
-  formatted_address = response["locations"][0]["name"];
-  longitude = response["locations"][0]["extent"]["xmin"];
-  latitude = response["locations"][0]["extent"]["ymin"];
-  //console.log(formatted_address);
-  $( "input:text" ).val(formatted_address);
-  state["address"] = formatted_address;
-  state["latitude"] = latitude;
-  state["longitude"] = longitude;
-  addr = state["address"].split(', ')
-  state["zip"] = addr [addr.length-1]
-  callAllAPIs();
-}
+          function callAllAPIs(){
+            $.each(all_api_callouts, function(i, x){x.callAPI()})
+          }
 
-function geocodeAddress(address){
-  address_string = address.replace(/ /g, "+");
-  //console.log(address_string);
-  url="http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/find?text="+address_string+"&f=pjson";
-  //console.log(url);
-  json_response = $.getJSON(url, parse_geocode_response);
-}
+          function cleanup_site(){
+            $("#small_buttons").empty()
+          }
 
-function submitAddress(){
-  var inputAddr = $( "input" ).val();
-  cleanup_site()
-  geocodeAddress(inputAddr)
-}
-
-// takes in the description text for the small button, a function that calls out to the API and returns
-// html for the display div
-function apiCallout(callout_function){
-  this.callout_function = callout_function;
-};
-
-apiCallout.prototype.callAPI = function () {
-  console.log("calling the API");
-  console.log(this.description_text)
-  console.log(this.callout_function)
-  this.callout_function()
-  //createSmallButton(this.description_text, this.callout_function());
-};
-
-//Example usage for the function above
-longCallout = new apiCallout(function(){createSmallButton("See the longitude", "<div>"+state["longitude"]+"</div>")});
-//latCallout = new apiCallout(function(){return("<div>"+state["latitude"]+"</div>")});
-//addrCallout = new apiCallout(function(){return("<div>"+state["address"]+"</div>")});
-//zipcodeCallout = new apiCallout(function(){
-//  addr = state["address"].split(', ')
-//  return("<div>"+addr[addr.length-1]+"</div>")});
-get311Callout = new apiCallout(print311Info)
-
-// These are all the API callouts we have defined. They will all run.
-all_api_callouts = [longCallout, get311Callout]
-
-function callAllAPIs(){
-  $.each(all_api_callouts, function(i, x){x.callAPI()})
-}
-
-function cleanup_site(){
-  $("#small_buttons").empty()
-}
-
+          on(dom.byId("submitbutton"), "click", submitAddress);
+});
 
 </script>
   </head>
@@ -140,7 +146,7 @@ function cleanup_site(){
           <input type="text" name="Address" id="address" style="width:400px" />
           </p>
           <p>
-          <input type="button" name="submit" value="Submit" id="submitbutton" onClick="submitAddress();"/>
+          <input type="button" name="submit" value="Submit" id="submitbutton"/>
           </p>
         </form>
       </div>
