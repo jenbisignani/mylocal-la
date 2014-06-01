@@ -16,8 +16,6 @@
     <script src="census.js"></script>
 
     <script type="text/javascript">
-    var foo;
-
       require([
         "esri/tasks/query", "esri/tasks/QueryTask", "esri/geometry/Geometry", 
         "esri/geometry/Point", "esri/geometry/Circle", "esri/SpatialReference",  
@@ -31,32 +29,6 @@
           state["latitude"] = null;
           state["longitude"] = null;
           state["zip"] = null;
-          state["neighborhood_name"] = null;
-
-
-          function setNeighborhoodName() {
-            var name;
-            var queryTask = new QueryTask("http://services3.arcgis.com/Oj4UNowFiRiZHKg1/arcgis/rest/services/Neighborhood_Council_Maps/FeatureServer/0");
-
-            var query = new Query();
-            query.geometry = new Point(state["longitude"], state["latitude"]);
-            query.outFields = ["*"];
-            query.outSpatialReference = {"wkid":102100};
-            query.spatialRelationship = esri.tasks.Query.SPATIAL_REL_INERSECTS;
-            queryTask.execute(query, function(results) {
-              name = results.features[0].attributes['NAME']
-              name = name.replace(" NC","")
-              name = name.replace(" CC","")
-              name = name.toLowerCase()
-              if (name == "downtown los angeles") {
-                name = "downtown la"
-              }
-              console.log(name)
-              state["neighborhood_name"] = name
-            });
-          }
-
-          foo = setNeighborhoodName;
 
           function policeStationInfo() {
             //First build the featurelayer to for the analysis layer
@@ -122,7 +94,9 @@
             queryTask.execute(query, function(results) {
               showResults(results, "Neighborhood Council");
             });
+
           }
+
 
           function getPollingStationInfo() {
             var queryTask = new QueryTask("http://services3.arcgis.com/Oj4UNowFiRiZHKg1/arcgis/rest/services/polling_places/FeatureServer/0");
@@ -178,12 +152,12 @@
             newdata.sort(function(a,b) { return b.service_count - a.service_count } )
 
             values = []
-            outputHTML = "<div><p>Top 311 call reasons in your zip code since 2011:</p><p>"
+            outputHTML = "<div>Top 311 calls in your zip code:<br>"
             for (var i = 0; i < Math.min(25,newdata.length); i++) {
-              outputHTML += (i+1) + ". " + newdata[i]['service_count'] + ' calls about ' + newdata[i]['service_name'] + '<br>'
+              outputHTML += newdata[i]['service_count'] + ' calls about ' + newdata[i]['service_name'] + '<br>'
               values.push({ 'label' : newdata[i]['service_name'] , 'value' : newdata[i]['service_count'] })
             }
-            outputHTML += '</p><p>This data provided by <a href="http://data.lacity.org">data.lacity.org</a></p></div>'
+            outputHTML += "</div>"
 
 
             newjson = [ { 'values' : values } ]
@@ -242,6 +216,7 @@
                 if ( (data[i]['neighborhood_council'].trim() == nbhd_name.trim()) && (data[i].hasOwnProperty('task')) && (data[i].hasOwnProperty('spending_category')) ) {
                   newobj = { 'label' : (data[i]['spending_category'] + ': ' + data[i]['task']) , 'value' : data[i]['sum_expenditure'] }
                   thisData.push(newobj)
+                  console.log(total)
                   total = +total + +data[i]['sum_expenditure']
 
                 }
@@ -364,22 +339,27 @@
 
           function cleanup_site(){
             $("#small_buttons").empty()
+            $("#display").empty()
           }
 
           on(dom.byId("submitbutton"), "click", submitAddress);
-
 });
 
 </script>
   </head>
   <body class="tundra">
-    <img src="mylocaltransparent.png">
+    <h1>Welcome to MyLocal.LA!</h1>
     <div id = "address bar">
       <div id="container">
+        <h3>Enter Your Location</h3>
         <form>
           <p>
-          <input type="text" name="Address" id="address" placeholder="Enter your address here"/>
+          <label for="Address">Address</label>
+          <input type="text" name="Address" id="address" style="width:400px" />
+          </p>
+          <p>
           <input type="button" name="submit" value="Submit" id="submitbutton"/>
+          </p>
         </form>
       </div>
     </div>
@@ -390,15 +370,11 @@
     <div id="detail", style="border:2px solid;">
       <div id = "detail-inner">
       <p>
-      Enter your address and hit the submit button to find out more about your neighborhood!
+      Put in your address and hit the submit button!
       </p>
     </div>
     </div>
 
-
-  <div id="chart">
-    <svg></svg>
-  </div>
 
   </body>
 </html>

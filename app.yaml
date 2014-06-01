@@ -1,0 +1,13 @@
+application: crested-vortex-598 
+version: popchips
+runtime: python27
+api_version: 1
+threadsafe: yes
+
+handlers:
+- url: /
+  static_files: public/index.html
+  upload: public/index.html
+
+- url: /
+  static_dir: public
