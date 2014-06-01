@@ -155,12 +155,12 @@
             newdata.sort(function(a,b) { return b.service_count - a.service_count } )
 
             values = []
-            outputHTML = "<div>Top 311 calls in your zip code:<br>"
+            outputHTML = "<div><b>Top 311 calls in your zip code since 2011:</b><br>"
             for (var i = 0; i < Math.min(25,newdata.length); i++) {
               outputHTML += newdata[i]['service_count'] + ' calls about ' + newdata[i]['service_name'] + '<br>'
               values.push({ 'label' : newdata[i]['service_name'] , 'value' : newdata[i]['service_count'] })
             }
-            outputHTML += "</div>"
+            outputHTML += '</div><p>This data is provided by <a href="http://data.lacity.org">data.lacity.org</a>.</p>'
 
 
             newjson = [ { 'values' : values } ]
@@ -191,12 +191,12 @@
               avg_water_expenditure = Math.round(total_water/total_pop*100)/100
 
 
-              html = "<div>Your Zip Code's Power Expenditure: "+local_power_expenditure+" Kilowatt-Hours vs an average of " + 
-              avg_power_expenditure + "<br/>Your Zip Code's Water Expenditure: " + local_water_expenditure +" Hundreds of Cubic Feet vs an average of " + avg_water_expenditure + "</div>"
+              html = "<div>Your zip code's per capita power expenditure: "+local_power_expenditure+" kilowatt-hours. (Average of " + 
+              avg_power_expenditure + " in LA.)<br/>" + "Your zip code's per capita water expenditure: " + local_water_expenditure +" hundreds of cubic feet. (Average of " + avg_water_expenditure + " in LA.)</div>"
 
-              html = html + "<br/> See <a href='https://www.ladwp.com/ladwp/faces/ladwp/residential/r-savemoney/r-sm-savingstips', target='_blank'>These tips</a> to learn more "
+              html = html + "<br/> See <a href='https://www.ladwp.com/ladwp/faces/ladwp/residential/r-savemoney/r-sm-savingstips', target='_blank'>these tips</a> to learn more about saving energy and water."
 
-              createSmallButton("Water and Power Expenditure Per Capita", html)
+              createSmallButton("Water and Power Expenditures", html)
 
           }
 
@@ -312,9 +312,9 @@
 
               function createDisplayWindow2() {
                 thisHTML = 'Your neighborhood:' + nbhd_name + "<br>";
+                thisHTML += '<b>Total spending of your neighborhood council = $' + total + "</b><br>";
                 thisHTML += 'Pie chart of your neighborhood council expenditures:<br> <div id="chart"><svg></svg></div>';
-                thisHTML += 'Total spending of your neighborhood council = $' + total + "<br>";
-                thisHTML += 'This data provided by <a href="http://data.lacity.org">data.lacity.org</a>';
+                thisHTML += '<p>This data is provided by <a href="http://data.lacity.org">data.lacity.org</a>.</p>';
 
                 $("#detail").html(thisHTML);
 
@@ -334,6 +334,11 @@
 
             var url = "http://controllerdata.lacity.org/resource/f2ec-m4t9.json?$select=neighborhood_council,spending_category,task,sum(expenditure)&$group=neighborhood_council,spending_category,task"
             $.getJSON(url, parseExpendRender)
+          }
+
+
+          function geoWiki() {
+            console.log(state)
           }
 
 
@@ -410,6 +415,7 @@
           nbhdExpendCallout = new apiCallout(mainNbhdExpend)
           policeStationCallout = new apiCallout(policeStationInfo)
           googleCivicCallout = new apiCallout(googleCivicData)
+          geoWikiCallout = new apiCallout(geoWiki)
           // These are all the API callouts we have defined. They will all run.
           all_api_callouts = [get311Callout, pollingStationsCallout, getGasPowerCallout, nbhdExpendCallout, googleCivicCallout]
 
