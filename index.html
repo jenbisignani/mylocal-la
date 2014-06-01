@@ -81,12 +81,12 @@
             newdata.sort(function(a,b) { return b.service_count - a.service_count } )
 
             values = []
-            outputHTML = "<div>Top 311 calls in your zip code:<br>"
+            outputHTML = "<div><p>Top 311 call reasons in your zip code since 2011:</p><p>"
             for (var i = 0; i < Math.min(25,newdata.length); i++) {
-              outputHTML += newdata[i]['service_count'] + ' calls about ' + newdata[i]['service_name'] + '<br>'
+              outputHTML += (i+1) + ". " + newdata[i]['service_count'] + ' calls about ' + newdata[i]['service_name'] + '<br>'
               values.push({ 'label' : newdata[i]['service_name'] , 'value' : newdata[i]['service_count'] })
             }
-            outputHTML += "</div>"
+            outputHTML += '</p><p>This data provided by <a href="http://data.lacity.org">data.lacity.org</a></p></div>'
 
 
             newjson = [ { 'values' : values } ]
