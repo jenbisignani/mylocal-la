@@ -29,6 +29,9 @@
           state["latitude"] = null;
           state["longitude"] = null;
           state["zip"] = null;
+          state["neighborhood_name"] = null;
+
+
 
           function policeStationInfo() {
             //First build the featurelayer to for the analysis layer
@@ -202,9 +205,40 @@
 
           //function nbhdExpend(nbhd_name) {
   
+          function mainNbhdExpend() {
+            // first get the name
+            var name;
+            var queryTask = new QueryTask("http://services3.arcgis.com/Oj4UNowFiRiZHKg1/arcgis/rest/services/Neighborhood_Council_Maps/FeatureServer/0");
+
+            var query = new Query();
+            query.geometry = new Point(state["longitude"], state["latitude"]);
+            query.outFields = ["*"];
+            query.outSpatialReference = {"wkid":102100};
+            query.spatialRelationship = esri.tasks.Query.SPATIAL_REL_INERSECTS;
+            queryTask.execute(query, function(results) {
+              name = results.features[0].attributes['NAME']
+              name = name.replace(" NC","")
+              name = name.replace(" CC","")
+              
+              if (name == "DOWNTOWN LOS ANGELES") {
+                name = "DOWNTOWN LA"
+              }
+              if (name == "GREATER GRIFFITH PARK") {
+                name = "LOS FELIZ"
+              }
+
+              //console.log(name)
+              state["neighborhood_name"] = name
+
+              // then run the main rendering function
+              nbhdExpend()
+            });
+          }
 
           function nbhdExpend() {
-            var nbhd_name = "Downtown LA" //hardcoded for now
+            //setNeighborhoodName()
+            //console.log(state["neighborhood_name"])
+            var nbhd_name = state["neighborhood_name"]
 
             function parseExpendRender(data) {
               thisData = []
@@ -213,10 +247,10 @@
               var total = 0
 
               for (var i = 0; i < data.length; i++) {
-                if ( (data[i]['neighborhood_council'].trim() == nbhd_name.trim()) && (data[i].hasOwnProperty('task')) && (data[i].hasOwnProperty('spending_category')) ) {
+                if ( (data[i]['neighborhood_council'].trim().toLowerCase() == nbhd_name.trim().toLowerCase()) && (data[i].hasOwnProperty('task')) && (data[i].hasOwnProperty('spending_category')) ) {
                   newobj = { 'label' : (data[i]['spending_category'] + ': ' + data[i]['task']) , 'value' : data[i]['sum_expenditure'] }
                   thisData.push(newobj)
-                  console.log(total)
+                  //console.log(total)
                   total = +total + +data[i]['sum_expenditure']
 
                 }
@@ -328,7 +362,7 @@
           pollingStationsCallout = new apiCallout(getPollingStationInfo)
           neighborhoodCouncilCallout = new apiCallout(getNeighborhoodCouncilInfo)
           getGasPowerCallout = new apiCallout(printGasPowerSpending)
-          nbhdExpendCallout = new apiCallout(nbhdExpend)
+          nbhdExpendCallout = new apiCallout(mainNbhdExpend)
           policeStationCallout = new apiCallout(policeStationInfo)
           // These are all the API callouts we have defined. They will all run.
           all_api_callouts = [longCallout, get311Callout, pollingStationsCallout, getGasPowerCallout, nbhdExpendCallout, neighborhoodCouncilCallout, policeStationCallout]
@@ -348,16 +382,12 @@
 </script>
   </head>
   <body class="tundra">
-    <h1>Welcome to MyLocal.LA!</h1>
+    <h1><img src="mylocaltransparent2.png"></h1>
     <div id = "address bar">
       <div id="container">
-        <h3>Enter Your Location</h3>
         <form>
           <p>
-          <label for="Address">Address</label>
-          <input type="text" name="Address" id="address" style="width:400px" />
-          </p>
-          <p>
+          <input type="text" name="Address" id="address" placeholder="Enter your address here"/>
           <input type="button" name="submit" value="Submit" id="submitbutton"/>
           </p>
         </form>
@@ -370,7 +400,7 @@
     <div id="detail", style="border:2px solid;">
       <div id = "detail-inner">
       <p>
-      Put in your address and hit the submit button!
+        Welcome to myLocal.LA, your portal for your local neighborhood: everything from parks and points of interest near you to getting involved in your Neighborhood Council.
       </p>
     </div>
     </div>

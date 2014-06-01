@@ -16,7 +16,6 @@
     <script src="census.js"></script>
 
     <script type="text/javascript">
-    var foo;
 
       require([
         "esri/tasks/query", "esri/tasks/QueryTask", "esri/geometry/Geometry", 
@@ -55,8 +54,6 @@
               state["neighborhood_name"] = name
             });
           }
-
-          foo = setNeighborhoodName;
 
           function policeStationInfo() {
             //First build the featurelayer to for the analysis layer
