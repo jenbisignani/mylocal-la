@@ -15,18 +15,26 @@
 
 
 
+
 function print311Info() {
-  addr = state["address"].split(', ')
-  zip = addr[addr.length-1]
-  url = "http://data.lacity.org/resource/ukiu-8trj.json?$select=service_name,count(1)&$group=service_name&$where=zip_code=" + zip
-  $.getJSON(url, function(data) { return ("<div> sdfsdf </div>") } )
+  console.log("print311");
+  addr = state["address"].split(', ');
+  zip = addr[addr.length-1];
+  url = "http://data.lacity.org/resource/ukiu-8trj.json?$select=service_name,count(1)&$group=service_name&$where=zip_code=" + zip;
+  console.log(url) 
+  $.getJSON(url, parse_311_and_render_both_divs )
 
 }
 
+function parse_311_and_render_both_divs(data){
+  createSmallButton(data[0]["service_name"], data[0]["service_name"])
+}
 
 
-function createSmallButton(display_text, output_html){
+function createSmallButton(display_text, resp){
   fullHTML = "<div style=&quot;border:2px solid;&quot;>"+display_text+"</div>";
+  resp = resp
+  output_html = resp
     button = $('<button/>',
       {
         text: display_text,
@@ -77,7 +85,8 @@ function apiCallout(description_text, callout_function){
 
 apiCallout.prototype.callAPI = function () {
   console.log("calling the API");
-  createSmallButton(this.description_text, this.callout_function());
+  this.callout_function()
+  //createSmallButton(this.description_text, this.callout_function());
 };
 
 //Example usage for the function above
@@ -90,7 +99,7 @@ zipcodeCallout = new apiCallout("See the zipcode!", function(){
 get311Callout = new apiCallout("get 311 info", print311Info)
 
 // These are all the API callouts we have defined. They will all run.
-all_api_callouts = [longCallout, latCallout, addrCallout, zipcodeCallout, get311Callout]
+all_api_callouts = [get311Callout]
 
 function callAllAPIs(){
   $.each(all_api_callouts, function(i, x){x.callAPI()})
