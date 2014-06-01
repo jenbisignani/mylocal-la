@@ -209,12 +209,12 @@
             });
           }
 
+          function link(text, url){
+            if(url != undefined){
+              return("<a href='"+ url +"', target='_blank'>" + text +"</a>")
+            } else {return(text)}}
+
           function format_election(json){
-            
-            function link(text, url){
-              if(url != undefined){
-                return("<a href='"+ url +"', target='_blank'>" + text +"</a>")
-              } else {return(text)}}
 
             if (json["office"] != undefined){
 
@@ -312,8 +312,8 @@
 
               function createDisplayWindow2() {
                 thisHTML = 'Your neighborhood:' + nbhd_name + "<br>";
-                thisHTML += '<b>Total spending of your neighborhood council = $' + total + "</b><br>";
-                thisHTML += 'Pie chart of your neighborhood council expenditures:<br> <div id="chart"><svg></svg></div>';
+                thisHTML += '<b>Total spending of your neighborhood council (during July 1, 2013 - October 5, 2013) = $' + total + "</b><br>";
+                thisHTML += 'Detailed view:<br> <div id="chart"><svg></svg></div>';
                 thisHTML += '<p>This data is provided by <a href="http://data.lacity.org">data.lacity.org</a>.</p>';
 
                 $("#detail").html(thisHTML);
@@ -336,16 +336,28 @@
             $.getJSON(url, parseExpendRender)
           }
 
+          var theHTML = "<p>Local landmarks with Wikipedia pages closest to you:<br>"
 
           function geoWiki() {
             url = "http://api.wikilocation.org/articles?lat=" + state["latitude"]
             url += "&lng=" + state["longitude"]
-            url += "&radius=8046"
+            url += "&radius=30000"
             url += "&type=landmark"
-            url += "&limit=10"
+            url += "&limit=20"
 
             function geoWikiRender(data) {
-              console.log(data)
+              articles = data["articles"]
+              for (var i = 0 ; i < data["articles"].length ; i++) {
+                wTitle = articles[i]['title']
+                wURL = articles[i]['url']
+                distance = articles[i]['distance']
+                distance = distance.substring(0,distance.length-1)
+                theHTML += link(wTitle,wURL) + ", " + distance + " meters away" + "<br>"
+              }
+              theHTML += "</p>"
+              theHTML += '<p>This data provided by <a href="http://wikilocation.org/">Wikilocation</a> API.</p>'
+
+              createSmallButton("Local Landmarks",theHTML)
             }
 
             $.getJSON(url,geoWikiRender)
