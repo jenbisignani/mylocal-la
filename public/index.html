@@ -169,12 +169,10 @@
           function printGasPowerSpending(){
             all_zips_url = "http://data.lacity.org/resource/c72k-f6bb.json?$select=zip_code,sum(water_use),sum(power_use)&$group=zip_code";
             totals_url = 
-            console.log("hereherehereh")
             gas_water_spending = $.getJSON(all_zips_url, parseGasPowerAndRender);
           }
 
           function parseGasPowerAndRender(data){
-            console.log("in callback")
             percapPower={}
             percapWater={}
             total_power=0
@@ -232,9 +230,6 @@
           }
 
           function format_polling_station(json){
-            console.log("pollingJSON")
-              console.log(json)
-              console.log(json["address"]["line1"])
               html = json["address"]["locationName"] + ", " + json["address"]["line1"] + " " + json["address"]["city"] + ", " + json["pollingHours"]
               html = "<br/>"+ html
               return(html)
@@ -247,10 +242,9 @@
             $.each(data["pollingLocations"], function(idx, x){polling_stations_html = polling_stations_html + format_polling_station(x)})
             elections_html = elections_html + "<p>" + polling_stations_html + "</p>"
               
-              $.each(data["contests"], function(idx, x){elections_html = elections_html + format_election(x);console.log(x["candidates"])})
+              $.each(data["contests"], function(idx, x){elections_html = elections_html + format_election(x)})
               var myData = data
               createSmallButton("June 3 Election Information", elections_html)
-              console.log(data)
           }
 
           //function nbhdExpend(nbhd_name) {
@@ -269,7 +263,6 @@
                 if ( (data[i]['neighborhood_council'].trim() == nbhd_name.trim()) && (data[i].hasOwnProperty('task')) && (data[i].hasOwnProperty('spending_category')) ) {
                   newobj = { 'label' : (data[i]['spending_category'] + ': ' + data[i]['task']) , 'value' : data[i]['sum_expenditure'] }
                   thisData.push(newobj)
-                  console.log(total)
                   total = +total + +data[i]['sum_expenditure']
 
                 }
@@ -321,7 +314,6 @@
           }
 
           function createDisplayWindow(display_html){
-            console.log(display_html);
             $("#detail").html(display_html);
           }
 
