@@ -17,19 +17,32 @@
 
 
 
-
 function print311Info() {
-  console.log("print311");
-  addr = state["address"].split(', ');
-  zip = addr[addr.length-1];
-  url = "http://data.lacity.org/resource/ukiu-8trj.json?$select=service_name,count(1)&$group=service_name&$where=zip_code=" + zip;
-  console.log(url) 
-  $.getJSON(url, parse_311_and_render_both_divs )
-
+  //addr = state["address"].split(', ');
+  //zip = addr[addr.length-1];
+  var zip = state["zip"]
+  url = "http://data.lacity.org/resource/ukiu-8trj.json?$select=service_name,count(1) as service_count"
+  url += "&$group=service_name"
+  url += "&$where=zip_code=" + zip;
+  $.getJSON(url, parse_311_and_render )
 }
 
-function parse_311_and_render_both_divs(data){
-  createSmallButton(data[0]["service_name"], data[0]["service_name"])
+function parse_311_and_render(data){
+  newdata = []
+  for (var i = 0; i < data.length; i++) {
+    if (data[i].hasOwnProperty("service_name")) {
+      newdata.push(data[i]);
+    }
+  }
+  newdata.sort(function(a,b) { return b.service_count - a.service_count } )
+
+  outputHTML = "<div>"
+  for (var i = 0; i < 20; i++) {
+    outputHTML += newdata[i]['service_count'] + ' calls about ' + newdata[i]['service_name'] + '<br>'
+  }
+  outputHTML += "</div>"
+
+  createSmallButton("Top 311 calls in your zipcode since 2011", outputHTML)
 }
 
 
