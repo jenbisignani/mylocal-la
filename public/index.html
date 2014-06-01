@@ -5,6 +5,7 @@
     <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
     <link rel="StyleSheet" href="sinorcaish-screen.css" type="text/css" media="screen" />
     <link rel="stylesheet" href="http://js.arcgis.com/3.9/js/dojo/dijit/themes/tundra/tundra.css">
+    <link rel="stylesheet" href="http://js.arcgis.com/3.9/js/esri/css/esri.css">
 
     <link href="nv.d3.css" rel="stylesheet">
 
@@ -20,8 +21,8 @@
         "esri/tasks/query", "esri/tasks/QueryTask", "esri/geometry/Geometry", 
         "esri/geometry/Point", "esri/geometry/Circle", "esri/SpatialReference",  
         "esri/dijit/analysis/FindNearest", "esri/layers/FeatureLayer", "esri/graphic", 
-        "esri/tasks/FeatureSet", "dojo/dom", "dojo/on", "dojo/domReady!"
-      ], function (Query, QueryTask, Geometry, Point, Circle, SpatialReference, FindNearest, FeatureLayer, Graphic, FeatureSet, dom, on) {
+        "esri/tasks/FeatureSet", "esri/map", "dojo/dom", "dojo/on", "dojo/domReady!"
+      ], function (Query, QueryTask, Geometry, Point, Circle, SpatialReference, FindNearest, FeatureLayer, Graphic, FeatureSet, Map, dom, on) {
 
 
           var state = {}
