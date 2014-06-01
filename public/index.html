@@ -34,6 +34,9 @@
           state["zip"] = null;
           state["neighborhood_name"] = null;
 
+          var elecUse = ""
+            var waterUse = ""
+
           function makeMap()  {
             map = new Map("map", {
               center: [state["longitude"], state["latitude"]],
@@ -198,8 +201,20 @@
 
           function printGasPowerSpending(){
             all_zips_url = "http://data.lacity.org/resource/c72k-f6bb.json?$select=zip_code,sum(water_use),sum(power_use)&$group=zip_code";
-            totals_url = 
             gas_water_spending = $.getJSON(all_zips_url, parseGasPowerAndRender);
+          }
+
+          function getElecUse(){
+            
+            url = 'http://data.lacity.org/resource/rijp-9dwj.json?$select=fy_12_13,location_1'
+            $.getJSON(url, function(x){elecUse = x; addWaterUseAndParse()})
+          }
+
+          function addWaterUseAndParse(){
+            console.log("elecUse")
+            
+            url = "http://data.lacity.org/resource/pzbs-vimf.json?$select=fy_12_13,location_1"
+            $.getJSON(url, function(x){waterUse=x;parseGasPowerAndRender()})
           }
 
           function parseGasPowerAndRender(data){
@@ -209,19 +224,35 @@
             total_water=0
             total_pop=3857799	
             ch = censusHash
-              $.each(data,function(idx,row){percapPower[row["zip_code"]] = 1*row["sum_power_use"]/ch[row["zip_code"]]; total_power = total_power+1*row["sum_power_use"]})
-              $.each(data,function(idx,row){percapWater[row["zip_code"]] = 1*row["sum_water_use"]/ch[row["zip_code"]]; total_water = total_water+1*row["sum_water_use"]})
+
+            function hackyGetZip(string){
+              return string.substr(string.length-7, 5)
+            }
+
+            console.log(elecUse)
+            console.log(waterUse)
+
+            console.log(elecUse[1])
+
+            $.each(elecUse, function(idx,row){percapPower[hackyGetZip(row["location_1"]["human_address"])] = 1*row["fy_12_13"]; total_power= total_power+1*row["fy_12_13"]})
+            $.each(waterUse, function(idx,row){percapWater[hackyGetZip(row["location_1"]["human_address"])] = 1*row["fy_12_13"]; total_power= total_power+1*row["fy_12_13"]})
+            //$.each(waterUse, function(idx,row){percapWater[row["location_1"]["human_address"]["zip"]] = 1*row["fy_12_13"]/ch[row["zip_code"]]; total_water = total_water+1*row["fy_12_13"]})
+
+            console.log(percapPower)
+
+              //$.each(data,function(idx,row){percapPower[row["zip_code"]] = 1*row["sum_power_use"]/ch[row["zip_code"]]; total_power = total_power+1*row["sum_power_use"]})
+              //$.each(data,function(idx,row){percapWater[row["zip_code"]] = 1*row["sum_water_use"]/ch[row["zip_code"]]; total_water = total_water+1*row["sum_water_use"]})
 
               local_power_expenditure = Math.round(percapPower[state["zip"]]*100)/100
-              local_water_expenditure = Math.round(percapWater[state["zip"]]*100)/100
+              local_water_expenditure = Math.round(percapWater[state["zip"]]*10000)/10000
               avg_power_expenditure = Math.round(total_power/total_pop*100)/100
-              avg_water_expenditure = Math.round(total_water/total_pop*100)/100
+              avg_water_expenditure = Math.round(total_water/total_pop*10000)/10000
 
 
-              html = "<div>Your zip code's per capita power expenditure: "+local_power_expenditure+" kilowatt-hours. (Average of " + 
-              avg_power_expenditure + " in LA.)<br/>" + "Your zip code's per capita water expenditure: " + local_water_expenditure +" hundreds of cubic feet. (Average of " + avg_water_expenditure + " in LA.)</div>"
+              html = "<div><h3>Your Water Use</h4>Your zip code's average per capita power expenditure: <b>"+local_power_expenditure+"</b> kilowatt-hours. <br/>" + 
+              "Your zip code's per capita water expenditure: <b>" + local_water_expenditure +"</b> hundred of cubic feet.</div>"
 
-              html = html + "<br/> See <a href='https://www.ladwp.com/ladwp/faces/ladwp/residential/r-savemoney/r-sm-savingstips', target='_blank'>these tips</a> to learn more about saving energy and water."
+              html = html + "<br/> See <a href='https://www.ladwp.com/ladwp/faces/ladwp/residential/r-savemoney/r-sm-savingstips', target='_blank'>these tips</a> from the LADWP to learn about saving energy and water. <br/> data provided by data.lacity.org"
 
               createSmallButton("Water and Power Expenditures", html)
 
@@ -272,7 +303,8 @@
             $.each(data["pollingLocations"], function(idx, x){polling_stations_html = polling_stations_html + format_polling_station(x)})
             elections_html = elections_html + "<p>" + polling_stations_html + "</p>"
               
-              $.each(data["contests"], function(idx, x){elections_html = elections_html + format_election(x)})
+            $.each(data["contests"], function(idx, x){elections_html = elections_html + format_election(x)})
+            elections_html = elections_html + "<br /><br /> data provided by the Google Civic API"
               var myData = data
               createSmallButton("June 3 Election Information", elections_html)
           }
@@ -460,7 +492,7 @@
           get311Callout = new apiCallout(print311Info)
           pollingStationsCallout = new apiCallout(getPollingStationInfo)
           neighborhoodCouncilCallout = new apiCallout(getNeighborhoodCouncilInfo)
-          getGasPowerCallout = new apiCallout(printGasPowerSpending)
+          getGasPowerCallout = new apiCallout(getElecUse)
           nbhdExpendCallout = new apiCallout(mainNbhdExpend)
           googleCivicCallout = new apiCallout(googleCivicData)
           geoWikiCallout = new apiCallout(geoWiki)
