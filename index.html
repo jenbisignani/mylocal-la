@@ -27,7 +27,20 @@
           state["longitude"] = null;
           state["zip"] = null;
 
-          
+          function getNeighborhoodCouncilInfo() {
+            var queryTask = new QueryTask("http://services3.arcgis.com/Oj4UNowFiRiZHKg1/arcgis/rest/services/Neighborhood_Council_Maps/FeatureServer/0");
+
+            var query = new Query();
+            query.geometry = new Point(state["longitude"], state["latitude"]);
+            query.outFields = ["*"];
+            query.outSpatialReference = {"wkid":102100};
+            query.spatialRelationship = esri.tasks.Query.SPATIAL_REL_INERSECTS;
+            queryTask.execute(query, function(results) {
+              showResults(results, "Neighborhood Council");
+            });
+
+          }
+
 
           function getPollingStationInfo() {
             var queryTask = new QueryTask("http://services3.arcgis.com/Oj4UNowFiRiZHKg1/arcgis/rest/services/polling_places/FeatureServer/0");
@@ -45,10 +58,12 @@
             query.geometry = circle;
             query.outFields = ["*"];
 
-            queryTask.execute(query,showResults);
+            queryTask.execute(query, function(results) {
+              showResults(results, "Polling Station");
+            });
           }
 
-          function showResults(results) {
+          function showResults(results, name) {
             var resultItems = [];
             var resultCount = results.features.length;
             for (var i = 0; i < resultCount; i++) {
@@ -58,7 +73,7 @@
               }
               resultItems.push("<br>");
             }
-            createSmallButton("Polling Station", resultItems.join(""));   
+            createSmallButton(name, resultItems.join(""));   
           }
 
           function print311Info() {
@@ -95,6 +110,42 @@
             createSmallButton("Top 311 calls", outputHTML)
           }
 
+          function printGasPowerSpending(){
+            all_zips_url = "http://data.lacity.org/resource/c72k-f6bb.json?$select=zip_code,sum(water_use),sum(power_use)&$group=zip_code";
+            totals_url = 
+            console.log("hereherehereh")
+            gas_water_spending = $.getJSON(all_zips_url, parseGasPowerAndRender);
+          }
+
+          function parseGasPowerAndRender(data){
+            console.log("in callback")
+            percapPower={}
+            percapWater={}
+            total_power=0
+            total_water=0
+            total_pop=3857799	
+            ch = censusHash
+              $.each(data,function(idx,row){percapPower[row["zip_code"]] = 1*row["sum_power_use"]/ch[row["zip_code"]]; total_power = total_power+1*row["sum_power_use"]})
+              $.each(data,function(idx,row){percapWater[row["zip_code"]] = 1*row["sum_water_use"]/ch[row["zip_code"]]; total_water = total_water+1*row["sum_water_use"]})
+
+              local_power_expenditure = Math.round(percapPower[state["zip"]]*100)/100
+              local_water_expenditure = Math.round(percapWater[state["zip"]]*100)/100
+              avg_power_expenditure = Math.round(total_power/total_pop*100)/100
+              avg_water_expenditure = Math.round(total_water/total_pop*100)/100
+
+
+              html = "<div>Your Zip Code's Power Expenditure: "+local_power_expenditure+" Kilowatt-Hours vs an average of " + 
+              avg_power_expenditure + "<br/>Your Zip Code's Water Expenditure: " + local_water_expenditure +" Hundreds of Cubic Feet vs an average of " + avg_water_expenditure + "</div>"
+
+              html = html + "<br/> See <a href='https://www.ladwp.com/ladwp/faces/ladwp/residential/r-savemoney/r-sm-savingstips', target='_blank'>These tips</a> to learn more "
+
+              createSmallButton("Water and Power Expenditure Per Capita", html)
+
+          }
+
+
+          //function nbhdExpend(nbhd_name) {
+  
 
           function nbhdExpend() {
             var nbhd_name = "Downtown LA" //hardcoded for now
@@ -219,10 +270,11 @@
           //  return("<div>"+addr[addr.length-1]+"</div>")});
           get311Callout = new apiCallout(print311Info)
           pollingStationsCallout = new apiCallout(getPollingStationInfo)
+          neighborhoodCouncilCallout = new apiCallout(getNeighborhoodCouncilInfo)
+          getGasPowerCallout = new apiCallout(printGasPowerSpending)
           nbhdExpendCallout = new apiCallout(nbhdExpend)
-
           // These are all the API callouts we have defined. They will all run.
-          all_api_callouts = [longCallout, get311Callout, pollingStationsCallout, nbhdExpendCallout]
+          all_api_callouts = [longCallout, get311Callout, pollingStationsCallout, getGasPowerCallout, nbhdExpendCallout, neighborhoodCouncilCallout]
 
           function callAllAPIs(){
             $.each(all_api_callouts, function(i, x){x.callAPI()})
@@ -230,6 +282,7 @@
 
           function cleanup_site(){
             $("#small_buttons").empty()
+            $("#display").empty()
           }
 
           on(dom.byId("submitbutton"), "click", submitAddress);
@@ -264,6 +317,7 @@
       </p>
     </div>
     </div>
+
 
   </body>
 </html>

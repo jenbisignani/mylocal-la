@@ -1769,10 +1769,7 @@ var censusArray = [
 [18451,"06","96161"],
 [165,"06","97635"]]
 
-          function censusHash(){
             censusHash = {};
             $(censusArray).each(function(i,ary){censusHash[ary[2]] = ary[0]});
-            return(censusHash);
-          }
 
 
