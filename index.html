@@ -95,8 +95,8 @@
               total = 0
 
               for (var i = 0; i < data.length; i++) {
-                if ( (data[i]['neighborhood_council'].trim() == nbhd_name.trim()) && (data[i].hasOwnProperty('spending_category')) ) {
-                  newobj = { 'label' : data[i]['spending_category'] , 'value' : data[i]['sum_expenditure'] }
+                if ( (data[i]['neighborhood_council'].trim() == nbhd_name.trim()) && (data[i].hasOwnProperty('task')) && (data[i].hasOwnProperty('spending_category')) ) {
+                  newobj = { 'label' : (data[i]['spending_category'] + ': ' + data[i]['task']) , 'value' : data[i]['sum_expenditure'] }
                   thisData.push(newobj)
                   total += data[i]['sum_expenditure']
                 }
@@ -121,13 +121,16 @@
               
             }
 
-            var url = "http://controllerdata.lacity.org/resource/f2ec-m4t9.json?$select=neighborhood_council,spending_category,sum(expenditure)&$group=neighborhood_council,spending_category"
+            var url = "http://controllerdata.lacity.org/resource/f2ec-m4t9.json?$select=neighborhood_council,spending_category,task,sum(expenditure)&$group=neighborhood_council,spending_category,task"
             $.getJSON(url, parseExpendRender)
 
           }
 
           // temporarily hardcoded
-          nbhdExpend("Voices of 90037")
+          nbhdExpend("Downtown LA")
+
+
+
 
           function createSmallButton(display_text, resp){
             fullHTML = "<div style=&quot;border:2px solid;&quot;>"+display_text+"</div>";
