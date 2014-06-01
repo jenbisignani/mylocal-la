@@ -37,10 +37,17 @@
               center: [state["longitude"], state["latitude"]],
               zoom: 15,
               basemap: "streets",
-              isPan: false,
+              isPan: "false",
               isScrollWheelZoom: false,
               isRubberBandZoom: false,
               isZoomSlider: false
+            });
+            map.on("load", function() {
+              map.disablePan();
+              map.disableScrollWheelZoom();
+              map.disableDoubleClickZoom();
+              map.hidePanArrows();
+              map.hideZoomSlider();
             });
           }
 
