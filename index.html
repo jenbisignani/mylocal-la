@@ -20,7 +20,37 @@
           state["zip"] = null;
 
 
+          function getPollingStationInfo() {
+            var queryTask = new QueryTask("http://services3.arcgis.com/Oj4UNowFiRiZHKg1/arcgis/rest/services/polling_places/FeatureServer/0");
 
+            var point = new Point(state["longitude"], state["latitude"]);
+            var circle = new Circle({
+              center: point,
+              geodesic: true,
+              radius: 1,
+              radiusUnit: "esriMiles"
+            });
+
+            var query = new Query();
+            query.returnGeometry = false;
+            query.geometry = circle;
+            query.outFields = ["*"];
+
+            queryTask.execute(query,showResults);
+          }
+
+          function showResults(results) {
+            var resultItems = [];
+            var resultCount = results.features.length;
+            for (var i = 0; i < resultCount; i++) {
+              var featureAttributes = results.features[i].attributes;
+              for (var attr in featureAttributes) {
+                resultItems.push("<b>" + attr + ":</b>  " + featureAttributes[attr] + "<br>");
+              }
+              resultItems.push("<br>");
+            }
+            createSmallButton("Polling Station", resultItems.join(""));   
+          }
 
           function print311Info() {
             //addr = state["address"].split(', ');
@@ -119,9 +149,10 @@
           //  addr = state["address"].split(', ')
           //  return("<div>"+addr[addr.length-1]+"</div>")});
           get311Callout = new apiCallout(print311Info)
+          pollingStationsCallout = new apiCallout(getPollingStationInfo)
 
           // These are all the API callouts we have defined. They will all run.
-          all_api_callouts = [longCallout, get311Callout]
+          all_api_callouts = [longCallout, get311Callout, pollingStationsCallout]
 
           function callAllAPIs(){
             $.each(all_api_callouts, function(i, x){x.callAPI()})
