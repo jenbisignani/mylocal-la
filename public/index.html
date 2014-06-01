@@ -467,7 +467,7 @@
           makeMapCallout = new apiCallout(makeMap);
 
           // These are all the API callouts we have defined. They will all run.
-          all_api_callouts = [get311Callout, pollingStationsCallout, getGasPowerCallout, nbhdExpendCallout, neighborhoodCouncilCallout, googleCivicCallout, geoWikiCallout, makeMapCallout]
+          all_api_callouts = [get311Callout, getGasPowerCallout, nbhdExpendCallout, neighborhoodCouncilCallout, googleCivicCallout, geoWikiCallout, makeMapCallout]
 
           function callAllAPIs(){
             $.each(all_api_callouts, function(i, x){x.callAPI()})
