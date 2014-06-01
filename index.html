@@ -79,13 +79,19 @@
             }
             newdata.sort(function(a,b) { return b.service_count - a.service_count } )
 
-            outputHTML = "<div>"
+            values = []
+            outputHTML = "<div>Top 311 calls in your zip code:<br>"
             for (var i = 0; i < Math.min(25,newdata.length); i++) {
               outputHTML += newdata[i]['service_count'] + ' calls about ' + newdata[i]['service_name'] + '<br>'
+              values.push({ 'label' : newdata[i]['service_name'] , 'value' : newdata[i]['service_count'] })
             }
             outputHTML += "</div>"
 
-            createSmallButton("Top 311 calls in your zipcode since 2011", outputHTML)
+
+            newjson = [ { 'values' : values } ]
+
+
+            createSmallButton("Top 311 calls", outputHTML)
           }
 
           function printGasPowerSpending(){
@@ -122,51 +128,61 @@
           }
 
 
-          function nbhdExpend(nbhd_name) {
+          //function nbhdExpend(nbhd_name) {
   
+
+          function nbhdExpend() {
+            var nbhd_name = "Downtown LA" //hardcoded for now
+
             function parseExpendRender(data) {
               thisData = []
               //var allData = []
 
-              total = 0
+              var total = 0
 
               for (var i = 0; i < data.length; i++) {
                 if ( (data[i]['neighborhood_council'].trim() == nbhd_name.trim()) && (data[i].hasOwnProperty('task')) && (data[i].hasOwnProperty('spending_category')) ) {
                   newobj = { 'label' : (data[i]['spending_category'] + ': ' + data[i]['task']) , 'value' : data[i]['sum_expenditure'] }
                   thisData.push(newobj)
-                  total += data[i]['sum_expenditure']
+                  console.log(total)
+                  total = +total + +data[i]['sum_expenditure']
 
                 }
-                // just this neighborhood
 
               }
 
-              nv.addGraph(function() {
-                var chart = nv.models.pieChart()
-                    .x(function(d) { return d.label })
-                    .y(function(d) { return d.value })
-                    .showLabels(false);
+              button = $('<button/>',
+                  {
+                    text: "Neighborhood Council Expenditures",
+                    click: function () {createDisplayWindow2()}
+                });
+              $("#small_buttons").append(button);
 
-                  d3.select("#chart svg")
-                      .datum(thisData)
-                      .transition().duration(1200)
-                      .call(chart);
+              function createDisplayWindow2() {
+                thisHTML = 'Your neighborhood:' + nbhd_name + "<br>";
+                thisHTML += 'Pie chart of your neighborhood council expenditures:<br> <div id="chart"><svg></svg></div>';
+                thisHTML += 'Total spending of your neighborhood council = $' + total + "<br>";
+                thisHTML += 'This data provided by <a href="http://data.lacity.org">data.lacity.org</a>';
 
-                return chart;
-              });
+                $("#detail").html(thisHTML);
 
-              
+                nv.addGraph(function() {
+                  var chart = nv.models.pieChart()
+                      .x(function(d) { return d.label })
+                      .y(function(d) { return d.value })
+                      .showLabels(false);
+                    d3.select("#chart svg")
+                        .datum(thisData)
+                        .transition().duration(1200)
+                        .call(chart);
+                  return chart;
+                });
+              }
             }
 
             var url = "http://controllerdata.lacity.org/resource/f2ec-m4t9.json?$select=neighborhood_council,spending_category,task,sum(expenditure)&$group=neighborhood_council,spending_category,task"
             $.getJSON(url, parseExpendRender)
-
           }
-
-          // temporarily hardcoded
-          nbhdExpend("Downtown LA")
-
-
 
 
           function createSmallButton(display_text, resp){
@@ -242,6 +258,10 @@
 
           // These are all the API callouts we have defined. They will all run.
           all_api_callouts = [longCallout, get311Callout, pollingStationsCallout, getGasPowerCallout]
+          nbhdExpendCallout = new apiCallout(nbhdExpend)
+
+          // These are all the API callouts we have defined. They will all run.
+          all_api_callouts = [longCallout, get311Callout, pollingStationsCallout, getGasPowerCallout, nbhdExpendCallout]
 
           function callAllAPIs(){
             $.each(all_api_callouts, function(i, x){x.callAPI()})
@@ -281,12 +301,6 @@
       <p>
       Put in your address and hit the submit button!
       </p>
-
-      <div id = "chart">
-        <svg></svg>
-      </div>
-
-
     </div>
     </div>
 

@@ -1771,6 +1771,5 @@ var censusArray = [
 
             censusHash = {};
             $(censusArray).each(function(i,ary){censusHash[ary[2]] = ary[0]});
-            return(censusHash);
 
 
