@@ -77,8 +77,7 @@ function submitAddress(){
 
 // takes in the description text for the small button, a function that calls out to the API and returns
 // html for the display div
-function apiCallout(description_text, callout_function){
-  this.description_text = description_text;
+function apiCallout(callout_function){
   this.callout_function = callout_function;
 };
 
@@ -91,13 +90,13 @@ apiCallout.prototype.callAPI = function () {
 };
 
 //Example usage for the function above
-longCallout = new apiCallout("", function(){createSmallButton("See the longitude", "<div>"+state["longitude"]+"</div>")});
-latCallout = new apiCallout("See the latitude!", function(){return("<div>"+state["latitude"]+"</div>")});
-addrCallout = new apiCallout("See the address!", function(){return("<div>"+state["address"]+"</div>")});
-zipcodeCallout = new apiCallout("See the zipcode!", function(){
-  addr = state["address"].split(', ')
-  return("<div>"+addr[addr.length-1]+"</div>")});
-get311Callout = new apiCallout("get 311 info", print311Info)
+longCallout = new apiCallout(function(){createSmallButton("See the longitude", "<div>"+state["longitude"]+"</div>")});
+//latCallout = new apiCallout(function(){return("<div>"+state["latitude"]+"</div>")});
+//addrCallout = new apiCallout(function(){return("<div>"+state["address"]+"</div>")});
+//zipcodeCallout = new apiCallout(function(){
+//  addr = state["address"].split(', ')
+//  return("<div>"+addr[addr.length-1]+"</div>")});
+get311Callout = new apiCallout(print311Info)
 
 // These are all the API callouts we have defined. They will all run.
 all_api_callouts = [longCallout, get311Callout]
