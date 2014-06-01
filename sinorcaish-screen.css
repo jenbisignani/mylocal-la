@@ -52,10 +52,19 @@ input {
   width: 900px;
   min-height: 200px;
   font-weight: bolder;
-
 }
 
+#chart {
+  background: white;
+  width: 600px;
+  height: 400px;
+  border-color: black;
+}
 
+#chart svg {
+  width: 600px;
+  height: 400px;
+}
 
 .hidden {			/* Used for content that should be displayed */
 				/* by non-stylesheet-aware browsers          */
