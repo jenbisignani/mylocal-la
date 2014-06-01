@@ -1,0 +1,404 @@
+<!DOCTYPE html "-//W3C//DTD XHTML 1.0 Strict//EN" 
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <link rel="StyleSheet" href="sinorcaish-screen.css" type="text/css" media="screen" />
+    <link rel="stylesheet" href="http://js.arcgis.com/3.9/js/dojo/dijit/themes/tundra/tundra.css">
+
+    <link href="nv.d3.css" rel="stylesheet">
+
+    <script src="d3.v3.js"></script>
+    <script src="nv.d3.js"></script>
+
+    <script src="jquery-1.11.1.js" type="text/javascript"></script>
+    <script src="http://js.arcgis.com/3.9/"></script>
+    <script src="census.js"></script>
+
+    <script type="text/javascript">
+    var foo;
+
+      require([
+        "esri/tasks/query", "esri/tasks/QueryTask", "esri/geometry/Geometry", 
+        "esri/geometry/Point", "esri/geometry/Circle", "esri/SpatialReference",  
+        "esri/dijit/analysis/FindNearest", "esri/layers/FeatureLayer", "esri/graphic", 
+        "esri/tasks/FeatureSet", "dojo/dom", "dojo/on", "dojo/domReady!"
+      ], function (Query, QueryTask, Geometry, Point, Circle, SpatialReference, FindNearest, FeatureLayer, Graphic, FeatureSet, dom, on) {
+
+
+          var state = {}
+          state["address"] = null;
+          state["latitude"] = null;
+          state["longitude"] = null;
+          state["zip"] = null;
+          state["neighborhood_name"] = null;
+
+
+          function setNeighborhoodName() {
+            var name;
+            var queryTask = new QueryTask("http://services3.arcgis.com/Oj4UNowFiRiZHKg1/arcgis/rest/services/Neighborhood_Council_Maps/FeatureServer/0");
+
+            var query = new Query();
+            query.geometry = new Point(state["longitude"], state["latitude"]);
+            query.outFields = ["*"];
+            query.outSpatialReference = {"wkid":102100};
+            query.spatialRelationship = esri.tasks.Query.SPATIAL_REL_INERSECTS;
+            queryTask.execute(query, function(results) {
+              name = results.features[0].attributes['NAME']
+              name = name.replace(" NC","")
+              name = name.replace(" CC","")
+              name = name.toLowerCase()
+              if (name == "downtown los angeles") {
+                name = "downtown la"
+              }
+              console.log(name)
+              state["neighborhood_name"] = name
+            });
+          }
+
+          foo = setNeighborhoodName;
+
+          function policeStationInfo() {
+            //First build the featurelayer to for the analysis layer
+            /*
+            var layerDefinition = {
+              "geometryType" : "esriGeometryPoint",
+              "fields" : [{
+                "name" : "DATETIME",
+                "type" : "esriFieldTypeDate",
+                "alias" : "DATETIME"
+              }]
+            };
+*/
+ 
+
+            var graphic = new Graphic(new Point(state["longitude"], state["latitude"]));
+            graphic.setAttributes({"ObjectID":1});              
+            var features = [graphic];
+            var featureSet = new FeatureSet();
+            featureSet.features = features; 
+
+           var featureCollection = {
+              layerDefinition: {
+                  "geometryType": "esriGeometryPoint",
+                  "objectIdField": "ObjectID",
+                  "fields": [{
+                    "name":"ObjectID",
+                    "alias":"ObjectID",
+                    "type":"esriFieldTypeOID"
+                  }]
+              },
+              featureSet: featureSet
+            };            
+            //Build the parameters for the closest facilities search
+            var findNearest = new FindNearest({
+              analysisLayer: new FeatureLayer(featureCollection), // Where am I now?
+              nearLayer: new FeatureLayer("http://services3.arcgis.com/Oj4UNowFiRiZHKg1/arcgis/rest/services/police_stations/FeatureServer/0"), //what's close?
+              maxCount: 1,
+            });
+
+            //build the parameters for our query
+            var params = {
+              itemParams: {
+                description: "Item Descripotion",
+                snippet: "Snippet",
+
+              }
+            }
+
+            //Now we run our query
+            findNearest.execute(params);
+
+          }
+
+          function getNeighborhoodCouncilInfo() {
+            var queryTask = new QueryTask("http://services3.arcgis.com/Oj4UNowFiRiZHKg1/arcgis/rest/services/Neighborhood_Council_Maps/FeatureServer/0");
+
+            var query = new Query();
+            query.geometry = new Point(state["longitude"], state["latitude"]);
+            query.outFields = ["*"];
+            query.outSpatialReference = {"wkid":102100};
+            query.spatialRelationship = esri.tasks.Query.SPATIAL_REL_INERSECTS;
+            queryTask.execute(query, function(results) {
+              showResults(results, "Neighborhood Council");
+            });
+          }
+
+          function getPollingStationInfo() {
+            var queryTask = new QueryTask("http://services3.arcgis.com/Oj4UNowFiRiZHKg1/arcgis/rest/services/polling_places/FeatureServer/0");
+
+            var point = new Point(state["longitude"], state["latitude"]);
+            var circle = new Circle({
+              center: point,
+              geodesic: true,
+              radius: 1,
+              radiusUnit: "esriMiles"
+            });
+
+            var query = new Query();
+            query.returnGeometry = false;
+            query.geometry = circle;
+            query.outFields = ["*"];
+
+            queryTask.execute(query, function(results) {
+              showResults(results, "Polling Station");
+            });
+          }
+
+          function showResults(results, name) {
+            var resultItems = [];
+            var resultCount = results.features.length;
+            for (var i = 0; i < resultCount; i++) {
+              var featureAttributes = results.features[i].attributes;
+              for (var attr in featureAttributes) {
+                resultItems.push("<b>" + attr + ":</b>  " + featureAttributes[attr] + "<br>");
+              }
+              resultItems.push("<br>");
+            }
+            createSmallButton(name, resultItems.join(""));   
+          }
+
+          function print311Info() {
+            //addr = state["address"].split(', ');
+            //zip = addr[addr.length-1];
+            var zip = state["zip"]
+            url = "http://data.lacity.org/resource/ukiu-8trj.json?$select=service_name,count(1) as service_count"
+            url += "&$group=service_name"
+            url += "&$where=zip_code=" + zip;
+            $.getJSON(url, parse_311_and_render)
+          }
+
+          function parse_311_and_render(data){
+            newdata = []
+            for (var i = 0; i < data.length; i++) {
+              if (data[i].hasOwnProperty("service_name")) {
+                newdata.push(data[i]);
+              }
+            }
+            newdata.sort(function(a,b) { return b.service_count - a.service_count } )
+
+            values = []
+            outputHTML = "<div><p>Top 311 call reasons in your zip code since 2011:</p><p>"
+            for (var i = 0; i < Math.min(25,newdata.length); i++) {
+              outputHTML += (i+1) + ". " + newdata[i]['service_count'] + ' calls about ' + newdata[i]['service_name'] + '<br>'
+              values.push({ 'label' : newdata[i]['service_name'] , 'value' : newdata[i]['service_count'] })
+            }
+            outputHTML += '</p><p>This data provided by <a href="http://data.lacity.org">data.lacity.org</a></p></div>'
+
+
+            newjson = [ { 'values' : values } ]
+
+
+            createSmallButton("Top 311 calls", outputHTML)
+          }
+
+          function printGasPowerSpending(){
+            all_zips_url = "http://data.lacity.org/resource/c72k-f6bb.json?$select=zip_code,sum(water_use),sum(power_use)&$group=zip_code";
+            totals_url = 
+            console.log("hereherehereh")
+            gas_water_spending = $.getJSON(all_zips_url, parseGasPowerAndRender);
+          }
+
+          function parseGasPowerAndRender(data){
+            console.log("in callback")
+            percapPower={}
+            percapWater={}
+            total_power=0
+            total_water=0
+            total_pop=3857799	
+            ch = censusHash
+              $.each(data,function(idx,row){percapPower[row["zip_code"]] = 1*row["sum_power_use"]/ch[row["zip_code"]]; total_power = total_power+1*row["sum_power_use"]})
+              $.each(data,function(idx,row){percapWater[row["zip_code"]] = 1*row["sum_water_use"]/ch[row["zip_code"]]; total_water = total_water+1*row["sum_water_use"]})
+
+              local_power_expenditure = Math.round(percapPower[state["zip"]]*100)/100
+              local_water_expenditure = Math.round(percapWater[state["zip"]]*100)/100
+              avg_power_expenditure = Math.round(total_power/total_pop*100)/100
+              avg_water_expenditure = Math.round(total_water/total_pop*100)/100
+
+
+              html = "<div>Your Zip Code's Power Expenditure: "+local_power_expenditure+" Kilowatt-Hours vs an average of " + 
+              avg_power_expenditure + "<br/>Your Zip Code's Water Expenditure: " + local_water_expenditure +" Hundreds of Cubic Feet vs an average of " + avg_water_expenditure + "</div>"
+
+              html = html + "<br/> See <a href='https://www.ladwp.com/ladwp/faces/ladwp/residential/r-savemoney/r-sm-savingstips', target='_blank'>These tips</a> to learn more "
+
+              createSmallButton("Water and Power Expenditure Per Capita", html)
+
+          }
+
+
+          //function nbhdExpend(nbhd_name) {
+  
+
+          function nbhdExpend() {
+            var nbhd_name = "Downtown LA" //hardcoded for now
+
+            function parseExpendRender(data) {
+              thisData = []
+              //var allData = []
+
+              var total = 0
+
+              for (var i = 0; i < data.length; i++) {
+                if ( (data[i]['neighborhood_council'].trim() == nbhd_name.trim()) && (data[i].hasOwnProperty('task')) && (data[i].hasOwnProperty('spending_category')) ) {
+                  newobj = { 'label' : (data[i]['spending_category'] + ': ' + data[i]['task']) , 'value' : data[i]['sum_expenditure'] }
+                  thisData.push(newobj)
+                  total = +total + +data[i]['sum_expenditure']
+
+                }
+
+              }
+
+              button = $('<button/>',
+                  {
+                    text: "Neighborhood Council Expenditures",
+                    click: function () {createDisplayWindow2()}
+                });
+              $("#small_buttons").append(button);
+
+              function createDisplayWindow2() {
+                thisHTML = 'Your neighborhood:' + nbhd_name + "<br>";
+                thisHTML += 'Pie chart of your neighborhood council expenditures:<br> <div id="chart"><svg></svg></div>';
+                thisHTML += 'Total spending of your neighborhood council = $' + total + "<br>";
+                thisHTML += 'This data provided by <a href="http://data.lacity.org">data.lacity.org</a>';
+
+                $("#detail").html(thisHTML);
+
+                nv.addGraph(function() {
+                  var chart = nv.models.pieChart()
+                      .x(function(d) { return d.label })
+                      .y(function(d) { return d.value })
+                      .showLabels(false);
+                    d3.select("#chart svg")
+                        .datum(thisData)
+                        .transition().duration(1200)
+                        .call(chart);
+                  return chart;
+                });
+              }
+            }
+
+            var url = "http://controllerdata.lacity.org/resource/f2ec-m4t9.json?$select=neighborhood_council,spending_category,task,sum(expenditure)&$group=neighborhood_council,spending_category,task"
+            $.getJSON(url, parseExpendRender)
+          }
+
+
+          function createSmallButton(display_text, resp){
+            fullHTML = "<div style=&quot;border:2px solid;&quot;>"+display_text+"</div>";
+              button = $('<button/>',
+                {
+                  text: display_text,
+                  click: function () {createDisplayWindow(resp)}
+              });
+            $("#small_buttons").append(button);
+          }
+
+          function createDisplayWindow(display_html){
+            console.log(display_html);
+            $("#detail").html(display_html);
+          }
+
+          function parse_geocode_response(response){
+            //console.log("in callback");
+            //console.log(response);
+            console.log(json_response);
+            formatted_address = response["locations"][0]["name"];
+            longitude = response["locations"][0]["extent"]["xmin"];
+            latitude = response["locations"][0]["extent"]["ymin"];
+            //console.log(formatted_address);
+            $( "input:text" ).val(formatted_address);
+            state["address"] = formatted_address;
+            state["latitude"] = latitude;
+            state["longitude"] = longitude;
+            addr = state["address"].split(', ')
+            state["zip"] = addr [addr.length-1]
+            callAllAPIs();
+          }
+
+          function geocodeAddress(address){
+            address_string = address.replace(/ /g, "+");
+            //console.log(address_string);
+            url="http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/find?text="+address_string+"&f=pjson";
+            //console.log(url);
+            json_response = $.getJSON(url, parse_geocode_response);
+          }
+
+          function submitAddress(){
+            var inputAddr = $( "input" ).val();
+            cleanup_site()
+            geocodeAddress(inputAddr)
+          }
+
+          // takes in the description text for the small button, a function that calls out to the API and returns
+          // html for the display div
+          function apiCallout(callout_function){
+            this.callout_function = callout_function;
+          };
+
+          apiCallout.prototype.callAPI = function () {
+            console.log("calling the API");
+            console.log(this.description_text)
+            console.log(this.callout_function)
+            this.callout_function()
+            //createSmallButton(this.description_text, this.callout_function());
+          };
+
+          //Example usage for the function above
+          longCallout = new apiCallout(function(){createSmallButton("See the longitude", "<div>"+state["longitude"]+"</div>")});
+          //latCallout = new apiCallout(function(){return("<div>"+state["latitude"]+"</div>")});
+          //addrCallout = new apiCallout(function(){return("<div>"+state["address"]+"</div>")});
+          //zipcodeCallout = new apiCallout(function(){
+          //  addr = state["address"].split(', ')
+          //  return("<div>"+addr[addr.length-1]+"</div>")});
+          get311Callout = new apiCallout(print311Info)
+          pollingStationsCallout = new apiCallout(getPollingStationInfo)
+          neighborhoodCouncilCallout = new apiCallout(getNeighborhoodCouncilInfo)
+          getGasPowerCallout = new apiCallout(printGasPowerSpending)
+          nbhdExpendCallout = new apiCallout(nbhdExpend)
+          policeStationCallout = new apiCallout(policeStationInfo)
+          // These are all the API callouts we have defined. They will all run.
+          all_api_callouts = [longCallout, get311Callout, pollingStationsCallout, getGasPowerCallout, nbhdExpendCallout, neighborhoodCouncilCallout, policeStationCallout]
+
+          function callAllAPIs(){
+            $.each(all_api_callouts, function(i, x){x.callAPI()})
+          }
+
+          function cleanup_site(){
+            $("#small_buttons").empty()
+          }
+
+          on(dom.byId("submitbutton"), "click", submitAddress);
+
+});
+
+</script>
+  </head>
+  <body class="tundra">
+    <img src="mylocaltransparent.png">
+    <div id = "address bar">
+      <div id="container">
+        <form>
+          <p>
+          <input type="text" name="Address" id="address" placeholder="Enter your address here"/>
+          <input type="button" name="submit" value="Submit" id="submitbutton"/>
+        </form>
+      </div>
+    </div>
+
+    <div id="small_buttons">
+    </div>
+
+    <div id="detail", style="border:2px solid;">
+      <div id = "detail-inner">
+      <p>
+      Enter your address and hit the submit button to find out more about your neighborhood!
+      </p>
+    </div>
+    </div>
+
+
+  <div id="chart">
+    <svg></svg>
+  </div>
+
+  </body>
+</html>
